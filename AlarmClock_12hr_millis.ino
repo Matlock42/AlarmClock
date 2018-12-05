@@ -24,9 +24,11 @@
 //************Constants*****************//
 const int blinkDuration = 500;
 const int blinkInterval = 500;
-const int LEDInterval = 1000; // every second
+const int LEDInterval = 1000;     // every second
+const int buttonInterval = 300;   // number of millisecs between button readings
 
-const int buttonInterval = 300; // number of millisecs between button readings
+const int AlarmStartAt = -1 * 60; // seconds to start alarm cycle from alarm time; (Negative is previous; positive is after)
+const int AlarmEndAt = 4 * 60;    // seconds to end alarm cycle from alarm time;
 
 //************Variables**************//
 RTC_PCF8523 rtc;
@@ -37,10 +39,10 @@ uint8_t hourupd;
 uint8_t minupd;
 uint8_t menu;
 bool PM;
-uint16_t LEDtimer = 0;
 uint8_t alarmHour;
 uint8_t alarmMin;
 bool alarmPM;
+bool AlarmLatch = false; // Used to hold LEDs on for longer
 
 bool Blink_State = 0;
 bool Menu_State = 0;
@@ -329,24 +331,25 @@ void DownMin()
     minupd = minupd - 1;
   }
 }
-
 void UpdateLEDs()
 {
   if (currentMillis - prevLEDMillis >= LEDInterval)
   {
-    int AlarmTime = (alarmHour * 100) + alarmMin;
+    int AlarmTime = (alarmHour * 60 * 60) + alarmMin * 60;
     DateTime now = rtc.now();
-    int time = (now.hour() * 100) + now.minute();
-    if (time >= (AlarmTime - 2) && time <= (AlarmTime + 3))
+    int curTime = (now.hour() * 60 * 60) + (now.minute() * 60) + now.second();
+    int diff = curTime - AlarmTime;
+    if (diff > AlarmStartAt && diff < AlarmEndAt )
     {
-      Sunrise(LEDtimer);
-      // go for 6 minutes
-      LEDtimer = LEDtimer + 1;
-      if (LEDtimer > 360) LEDtimer = 0;
+      Sunrise(diff-AlarmStartAt);
+      AlarmLatch = true; // force "Snooze" to be pressed.
     }
-    else {
-      ClearLEDs();
-      LEDtimer = 0;
+    else // Stop updating the LEDs
+    {
+      //if(AlarmLatch == false) // when "Snooze" is pressed
+      //{
+        ClearLEDs();
+      //}
     }
     prevLEDMillis = prevLEDMillis + LEDInterval;
   }
