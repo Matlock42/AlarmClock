@@ -1,8 +1,8 @@
 /*
   :Project:Clock_Alarm
   :Author: Joel Cranmer
-  :Date: 11/8/2018
-  :Revision: 1.1
+  :Date: 02/19/2019
+  :Revision: 1.2
   :License: MIT License
 */
 //************libraries**************//
@@ -16,16 +16,17 @@
 #endif
 
 //************Buttons*****************//
-#define MENU_PB 7 // Button SET MENU'
-#define PLUS_PB 4 // Button +
-#define MINUS_PB 1 // Button -
-#define LEDS 6 // LED strip
+#define MENU_PB 7   // Button SET MENU'
+#define PLUS_PB 4   // Button +
+#define MINUS_PB 1  // Button -
+#define LEDS 6      // LED strip
+#define AlarmON 2   // Alarm Toggle switch
 
 //************Constants*****************//
 const int blinkDuration = 500;
 const int blinkInterval = 500;
 const int LEDInterval = 1000;     // every second
-const int buttonInterval = 300;   // number of millisecs between button readings
+const int buttonInterval = 300;   // number of millisecond between button readings
 
 const int AlarmStartAt = -1 * 60; // seconds to start alarm cycle from alarm time; (Negative is previous; positive is after)
 const int AlarmEndAt = 4 * 60;    // seconds to end alarm cycle from alarm time;
@@ -59,7 +60,7 @@ unsigned long prevLEDMillis = 0;  // time when LEDs last checked
 void setup()
 {
   disp.begin(0x70);
-  // Set Brighness to low
+  // Set Brightness to low
   disp.setBrightness(0);
   strip.begin();
   strip.show(); // Initialize all pixels to 'off'
@@ -67,6 +68,7 @@ void setup()
   pinMode(MENU_PB, INPUT_PULLUP);
   pinMode(PLUS_PB, INPUT_PULLUP);
   pinMode(MINUS_PB, INPUT_PULLUP);
+  pinMode(AlarmON, INPUT_PULLUP);
 
   Serial.begin(57600);
   if (! rtc.begin()) {
@@ -102,9 +104,16 @@ void loop()
 
   if (Menu_State)
   {
-    // Comment out for debug
-    menu = menu + 1;
+    if (digitalRead(AlarmON) == LOW && menu == 0)
+    {
+      menu = 6;
+    }
+    else
+    {
+      menu = menu + 1;
+    }
   }
+  
   // in which subroutine should we go?
   if (menu == 0)
   {
@@ -123,9 +132,21 @@ void loop()
     StoreAgg();
     menu = 0;
   }
+  if (menu == 6)
+  {
+    DisplaySetAlarmHour();
+  }
+  if (menu == 7)
+  {
+    DisplaySetAlarmminute();
+  }
+  if (menu == 8)
+  {
+    menu=0;
+  }
 }
 
-void DisplayDateTime ()
+void DisplayDateTime()
 {
   uint8_t hr_24, hr_12;
   // We show the current time
@@ -190,11 +211,11 @@ void DisplaySetMinute()
   // Setting the minutes
   if (Plus_State)
   {
-    UpMin();
+    minupd = UpMin(minupd);
   }
   if (Minus_State)
   {
-    DownMin();
+    minupd = DownMin(minupd);
   }
   // clear the hour
   disp.clear();
@@ -214,6 +235,53 @@ void StoreAgg()
   if (hourupd > 23) hourupd = 0;
   rtc.adjust(DateTime(now.year(), now.month(), now.day(), hourupd, minupd, 0));
   DisplayDateTime();
+}
+
+// *********************
+// Alarm Setting
+// *********************
+
+void DisplaySetAlarmHour()
+{
+  // Setting the hour
+  if (Plus_State)
+  {
+    UpAlarmHour();
+  }
+  if (Minus_State)
+  {
+    DownAlarmHour();
+  }
+  // clear the min
+  disp.clear();
+  disp.drawColon(true);
+  if (alarmPM) disp.writeDigitRaw(2, 0x0A);
+  disp.blinkRate(0);
+  // show only hour (not min)
+  disp.writeDigitNum(0, (alarmHour / 10) % 10, false);
+  disp.writeDigitNum(1, alarmHour % 10, false);
+  disp.writeDisplay();
+}
+
+void DisplaySetAlarmMinute()
+{
+  // Setting the minutes
+  if (Plus_State)
+  {
+    alarmMin = UpMin(alarmMin);
+  }
+  if (Minus_State)
+  {
+    alarmMin = DownMin(alarmMin);
+  }
+  // clear the hour
+  disp.clear();
+  disp.drawColon(true);
+  disp.blinkRate(0);
+  // show only min (not hour)
+  disp.writeDigitNum(3, (alarmMin / 10) % 10, false);
+  disp.writeDigitNum(4, alarmMin % 10, false);
+  disp.writeDisplay();
 }
 
 void readMenuButton()
@@ -308,29 +376,58 @@ void DownHour()
   }
 }
 
-void UpMin()
+uint8_t UpMin(uint8_t min)
 {
-  if (minupd == 59)
+  if (min == 59)
   {
-    minupd = 0;
+    min = 0;
   }
   else
   {
-    minupd = minupd + 1;
+    min = min + 1;
+  }
+  return min;
+}
+
+uint8_t DownMin(uint8_t min)
+{
+  if (min == 0)
+  {
+    min = 59;
+  }
+  else
+  {
+    min = min - 1;
+  }
+  return min;
+}
+
+void UpAlarmHour()
+{
+  if (alarmHour == 11) alarmPM = !alarmPM; // switch AM/PM
+  if (alarmHour == 12)
+  {
+    alarmHour = 1;
+  }
+  else
+  {
+    alarmHour = alarmHour + 1;
   }
 }
 
-void DownMin()
+void DownAlarmHour()
 {
-  if (minupd == 0)
+  if (alarmHour == 12) alarmPM = !alarmPM;
+  if (alarmHour == 1)
   {
-    minupd = 59;
+    alarmHour = 12;
   }
   else
   {
-    minupd = minupd - 1;
+    alarmHour = alarmHour - 1;
   }
 }
+
 void UpdateLEDs()
 {
   if (currentMillis - prevLEDMillis >= LEDInterval)
