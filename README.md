@@ -3,6 +3,8 @@ Arduino based RTC Sunrise Alarm Clock
 
 This project is to create a clock that lights up as an artificial sunrise to wake you up in the morning.
 
+![Prototype clock](Pictures/Prototype.jpg "Prototype")
+
 ## Hardware
 This is the hardware that I used to build this project, all of which can be obtained on Adafruit:
 
