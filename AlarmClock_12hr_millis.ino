@@ -1,8 +1,8 @@
 /*
   :Project:Clock_Alarm
   :Author: Joel Cranmer
-  :Date: 02/19/2019
-  :Revision: 1.2
+  :Date: 5/21/2019
+  :Revision: 1.3
   :License: MIT License
 */
 //************libraries**************//
@@ -16,11 +16,12 @@
 #endif
 
 //************Buttons*****************//
-#define MENU_PB 7   // Button SET MENU'
-#define PLUS_PB 4   // Button +
-#define MINUS_PB 1  // Button -
-#define LEDS 6      // LED strip
-#define AlarmON 2   // Alarm Toggle switch
+#define MENU_PB 6 // Button SET MENU'
+#define PLUS_PB 4 // Button +
+#define MINUS_PB 0 // Button -
+#define LEDS 7 // LED strip
+#define AlarmON 5 // Alarm Toggle switch
+#define SNOOZE 8 // Snooze button
 
 //************Constants*****************//
 const int blinkDuration = 500;
@@ -69,6 +70,7 @@ void setup()
   pinMode(PLUS_PB, INPUT_PULLUP);
   pinMode(MINUS_PB, INPUT_PULLUP);
   pinMode(AlarmON, INPUT_PULLUP);
+  pinMode(SNOOZE, INPUT_PULLUP);
 
   Serial.begin(57600);
   if (! rtc.begin()) {
@@ -138,7 +140,7 @@ void loop()
   }
   if (menu == 7)
   {
-    DisplaySetAlarmminute();
+    DisplaySetAlarmMinute();
   }
   if (menu == 8)
   {
@@ -456,6 +458,7 @@ void Sunrise( uint16_t t )
 {
   uint32_t black = strip.Color(0, 0, 0);
   uint32_t pink = strip.Color(32, 10, 16);
+  uint32_t orange = strip.Color(127, 48, 10);
   uint32_t yellow = strip.Color(127, 127, 16);
   uint32_t white = strip.Color(191, 191, 98);
   uint32_t color;
@@ -470,13 +473,13 @@ void Sunrise( uint16_t t )
   {
     color = InterpolateColors( t, black, pink);
   }
-  else if (t > 100 && t <= 200) // pink -> yellow
+  else if (t > 100 && t <= 200) // pink -> orange
   {
-    color = InterpolateColors((t - 100), pink, yellow);
+    color = InterpolateColors((t - 100), pink, orange);
   }
-  else // yellow -> white
+  else // orange -> yellow
   {
-    color = InterpolateColors((t - 200), yellow, white);
+    color = InterpolateColors((t - 200), orange, yellow);
   }
 
   // Set all pixels to color
