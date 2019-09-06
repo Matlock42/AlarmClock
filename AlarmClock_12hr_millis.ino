@@ -2,7 +2,7 @@
   :Project:Clock_Alarm
   :Author: Joel Cranmer
   :Date: 9/6/2019
-  :Revision: 1.3.1
+  :Revision: 1.4
   :License: MIT License
 */
 //************libraries**************//
@@ -50,12 +50,14 @@ bool Blink_State = 0;
 bool Menu_State = 0;
 bool Plus_State = 0;
 bool Minus_State = 0;
+bool Snooze_State = 0;
 
 unsigned long currentMillis = 0;   // stores the value of millis() in each iteration of loop()
 unsigned long prevBlinkMills = 0;  // stores last time LED was updated
 unsigned long prevMenuMillis = 0;  // time when button press last checked
 unsigned long prevPlusMillis = 0;
 unsigned long prevMinusMillis = 0;
+unsigned long prevSnoozeMillis = 0;
 unsigned long prevLEDMillis = 0;  // time when LEDs last checked
 
 void setup()
@@ -102,6 +104,7 @@ void loop()
   readMenuButton();
   readPlusButton();
   readMinusButton();
+  readSnoozeButton();
   UpdateLEDs();
 
   if (Menu_State)
@@ -343,6 +346,23 @@ void readMinusButton()
   }
 }
 
+void readSnoozeButton()
+{
+  if (millis() - prevSnoozeMillis >= buttonInterval)
+  {
+    if (digitalRead(SNOOZE) == LOW)
+    {
+      Snooze_State = HIGH;
+      AlarmLatch = false;
+      prevSnoozeMillis = currentMillis;
+    }
+  }
+  else
+  {
+    Snooze_State = LOW;
+  }
+}
+
 void updateBlinkState()
 {
   if (Blink_State == 0)
@@ -449,17 +469,17 @@ void UpdateLEDs()
     DateTime now = rtc.now();
     int curTime = (now.hour() * 60 * 60) + (now.minute() * 60) + now.second();
     int diff = curTime - AlarmTime;
-    if (diff > AlarmStartAt && diff < AlarmEndAt )
+    if ( digitalRead(AlarmON) == LOW && (diff > AlarmStartAt && diff < AlarmEndAt ))
     {
       Sunrise(diff-AlarmStartAt);
       AlarmLatch = true; // force "Snooze" to be pressed.
     }
     else // Stop updating the LEDs
     {
-      //if(AlarmLatch == false) // when "Snooze" is pressed
-      //{
+      if(AlarmLatch == false) // when "Snooze" is pressed
+      {
         ClearLEDs();
-      //}
+      }
     }
     prevLEDMillis = prevLEDMillis + LEDInterval;
   }
