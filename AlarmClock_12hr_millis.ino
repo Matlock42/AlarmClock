@@ -1,8 +1,8 @@
 /*
   :Project:Clock_Alarm
   :Author: Joel Cranmer
-  :Date: 5/21/2019
-  :Revision: 1.3
+  :Date: 9/6/2019
+  :Revision: 1.3.1
   :License: MIT License
 */
 //************libraries**************//
@@ -35,7 +35,7 @@ const int AlarmEndAt = 4 * 60;    // seconds to end alarm cycle from alarm time;
 //************Variables**************//
 RTC_PCF8523 rtc;
 Adafruit_7segment disp = Adafruit_7segment();
-Adafruit_NeoPixel strip = Adafruit_NeoPixel(8, LEDS, NEO_GRB + NEO_KHZ800);
+Adafruit_NeoPixel strip = Adafruit_NeoPixel(12, LEDS, NEO_GRB + NEO_KHZ800);
 
 uint8_t hourupd;
 uint8_t minupd;
@@ -166,15 +166,22 @@ void DisplayDateTime()
   // No BLINKING!!!
   disp.blinkRate(0);
   disp.print(decimalTime);
+
+  uint8_t dots = 0;
+  // src: https://learn.adafruit.com/adafruit-led-backpack/1-2-inch-7-segment-backpack
+  // PM (bottom left)   - 0x08
+  // Alarm (top left)   - 0x04
+  // colon (:)          - 0x02
+  // decimal (top right)- 0x10
+  
   if (Blink_State)
   {
-    if (PM) disp.writeDigitRaw(2, 0x0A);
-    else disp.drawColon(true);
+    dots = 0x02;
   }
-  else
-  {
-    if (PM) disp.writeDigitRaw(2, 0x08);
-  }
+  if (PM) dots += 0x08;
+  if (digitalRead(AlarmON) == LOW) dots += 0x04;
+  disp.writeDigitRaw(2, dots);
+  
   disp.writeDisplay();
 
   // update memory
@@ -256,8 +263,9 @@ void DisplaySetAlarmHour()
   }
   // clear the min
   disp.clear();
-  disp.drawColon(true);
-  if (alarmPM) disp.writeDigitRaw(2, 0x0A);
+  uint8_t dots = 0x02 + 0x04;
+  if (alarmPM) dots += 0x08;
+  disp.writeDigitRaw(2, dots);
   disp.blinkRate(0);
   // show only hour (not min)
   disp.writeDigitNum(0, (alarmHour / 10) % 10, false);
@@ -278,7 +286,8 @@ void DisplaySetAlarmMinute()
   }
   // clear the hour
   disp.clear();
-  disp.drawColon(true);
+  uint8_t dots = 0x02 + 0x04;
+  disp.writeDigitRaw(2, dots);
   disp.blinkRate(0);
   // show only min (not hour)
   disp.writeDigitNum(3, (alarmMin / 10) % 10, false);
@@ -435,6 +444,8 @@ void UpdateLEDs()
   if (currentMillis - prevLEDMillis >= LEDInterval)
   {
     int AlarmTime = (alarmHour * 60 * 60) + alarmMin * 60;
+    if (alarmPM)
+    {  AlarmTime = AlarmTime + (12 * 60 * 60); }
     DateTime now = rtc.now();
     int curTime = (now.hour() * 60 * 60) + (now.minute() * 60) + now.second();
     int diff = curTime - AlarmTime;
