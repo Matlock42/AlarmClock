@@ -1,8 +1,8 @@
 /*
   :Project:Clock_Alarm
   :Author: Joel Cranmer
-  :Date: 9/6/2019
-  :Revision: 1.4
+  :Date: 10/28/2019
+  :Revision: 1.5
   :License: MIT License
 */
 //************libraries**************//
@@ -463,12 +463,12 @@ void UpdateLEDs()
 {
   if (currentMillis - prevLEDMillis >= LEDInterval)
   {
-    int AlarmTime = (alarmHour * 60 * 60) + alarmMin * 60;
+    uint32_t AlarmTime = (alarmHour * 60 * 60) + alarmMin * 60;
     if (alarmPM)
     {  AlarmTime = AlarmTime + (12 * 60 * 60); }
     DateTime now = rtc.now();
-    int curTime = (now.hour() * 60 * 60) + (now.minute() * 60) + now.second();
-    int diff = curTime - AlarmTime;
+    uint32_t curTime = (now.hour() * 60 * 60) + (now.minute() * 60) + now.second();
+    uint32_t diff = curTime - AlarmTime;
     if ( digitalRead(AlarmON) == LOW && (diff > AlarmStartAt && diff < AlarmEndAt ))
     {
       Sunrise(diff-AlarmStartAt);
