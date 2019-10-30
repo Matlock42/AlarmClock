@@ -1,7 +1,7 @@
 /*
   :Project:Clock_Alarm
   :Author: Joel Cranmer
-  :Date: 10/28/2019
+  :Date: 10/30/2019
   :Revision: 1.5
   :License: MIT License
 */
@@ -468,7 +468,7 @@ void UpdateLEDs()
     {  AlarmTime = AlarmTime + (12 * 60 * 60); }
     DateTime now = rtc.now();
     uint32_t curTime = (now.hour() * 60 * 60) + (now.minute() * 60) + now.second();
-    uint32_t diff = curTime - AlarmTime;
+    long diff = curTime - AlarmTime;    
     if ( digitalRead(AlarmON) == LOW && (diff > AlarmStartAt && diff < AlarmEndAt ))
     {
       Sunrise(diff-AlarmStartAt);
@@ -485,7 +485,7 @@ void UpdateLEDs()
   }
 }
 
-void Sunrise( uint16_t t )
+void Sunrise( long t )
 {
   uint32_t black = strip.Color(0, 0, 0);
   uint32_t pink = strip.Color(32, 10, 16);
@@ -495,7 +495,7 @@ void Sunrise( uint16_t t )
   uint32_t color;
 
   // clear all previous colors
-  for (uint16_t i = 0; i < strip.numPixels(); i++)
+  for (uint8_t i = 0; i < strip.numPixels(); i++)
   {
     strip.setPixelColor(i, 0);
   }
@@ -514,7 +514,7 @@ void Sunrise( uint16_t t )
   }
 
   // Set all pixels to color
-  for (uint16_t i = 0; i < strip.numPixels(); i++)
+  for (uint8_t i = 0; i < strip.numPixels(); i++)
   {
     strip.setPixelColor(i, color);
     //if(t<150) i++; // every other pixel
@@ -526,7 +526,7 @@ void Sunrise( uint16_t t )
 
 void ClearLEDs()
 {
-  for (uint16_t i = 0; i < strip.numPixels(); i++)
+  for (uint8_t i = 0; i < strip.numPixels(); i++)
   {
     strip.setPixelColor(i, 0);
   }
