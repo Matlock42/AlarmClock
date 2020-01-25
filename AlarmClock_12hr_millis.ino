@@ -1,8 +1,8 @@
 /*
   :Project:Clock_Alarm
   :Author: Joel Cranmer
-  :Date: 10/30/2019
-  :Revision: 1.5
+  :Date: 1/24/2020
+  :Revision: 1.6
   :License: MIT License
 */
 //************libraries**************//
@@ -467,9 +467,10 @@ void UpdateLEDs()
     if (alarmPM)
     {  AlarmTime = AlarmTime + (12 * 60 * 60); }
     DateTime now = rtc.now();
+    bool nowPM = (now.hour() >= 12);
     uint32_t curTime = (now.hour() * 60 * 60) + (now.minute() * 60) + now.second();
     long diff = curTime - AlarmTime;    
-    if ( digitalRead(AlarmON) == LOW && (diff > AlarmStartAt && diff < AlarmEndAt ))
+    if ( digitalRead(AlarmON) == LOW && (diff > AlarmStartAt && diff < AlarmEndAt ) && alarmPM == nowPM)
     {
       Sunrise(diff-AlarmStartAt);
       AlarmLatch = true; // force "Snooze" to be pressed.
